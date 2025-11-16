@@ -1,0 +1,138 @@
+
+
+
+
+
+
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { branches } from '../assets/assets'
+
+const Appointments = () => {
+  const { name } = useParams()
+  const navigate = useNavigate()
+  const dow = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+
+  const [branchInfo, setBranchInfo] = useState(null)
+  const [branchSlots, setBranchSlots] = useState([])
+  const [slotIndex, setSlotIndex] = useState(0)
+  const [slotTime, setSlotTime] = useState('')
+
+  // Get branch info locally (you can later replace this with API call too if needed)
+  const fetchBranchInfo = async () => {
+    const info = branches.find(branch => branch.name === name)
+    setBranchInfo(info)
+  }
+
+  // Fetch booked/available slots from REST API
+  const fetchBranchSlots = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/booked-slots?branch=${name}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      /**
+       * Expected data format example (you can adjust mapping if needed):
+       * [
+       *   [
+       *     { datetime: "2025-10-20T10:00:00Z", time: "10:00 AM" },
+       *     { datetime: "2025-10-20T10:30:00Z", time: "10:30 AM" }
+       *   ],
+       *   [
+       *     { datetime: "2025-10-21T09:00:00Z", time: "09:00 AM" },
+       *     ...
+       *   ]
+       * ]
+       */
+
+      // Normalize times if backend returns ISO strings
+      const normalized = data.map(daySlots =>
+        daySlots.map(slot => ({
+          ...slot,
+          datetime: new Date(slot.datetime)
+        }))
+      )
+
+      setBranchSlots(normalized)
+    } catch (error) {
+      console.error('Error fetching booked slots:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchBranchInfo()
+  }, [name])
+
+  useEffect(() => {
+    if (branchInfo) {
+      fetchBranchSlots()
+    }
+  }, [branchInfo])
+
+  return (
+    <div>
+      {name ? (
+        <div>
+          <p className='text-2xl'>{name} appointments</p>
+        </div>
+      ) : (
+        <p className='text-2xl'>No appointments to show</p>
+      )}
+
+      <div className='sm:pl-4 mt-4 font-medium text-gray-700'>
+        <p>Booking Slots</p>
+
+        {/* Date selector */}
+        <div className='flex gap-3 items-center w-full overflow-x-scroll mt-4'>
+          {branchSlots.length > 0 &&
+            branchSlots.map((daySlots, index) => (
+              <div
+                onClick={() => setSlotIndex(index)}
+                key={index}
+                className={`text-center py-6 min-w-16 w-30 gap-8 rounded-full cursor-pointer ${
+                  slotIndex === index
+                    ? 'bg-blue-600 text-white'
+                    : 'border border-gray-600'
+                }`}
+              >
+                <p>{daySlots[0] && dow[daySlots[0].datetime.getDay()]}</p>
+                <p>{daySlots[0] && daySlots[0].datetime.getDate()}</p>
+              </div>
+            ))}
+        </div>
+
+        {/* Time slots */}
+        <div className='grid grid-cols-5 gap-4 overflow-x-scroll mt-4'>
+          {branchSlots.length > 0 &&
+            branchSlots[slotIndex]?.map((item, index) => (
+              <p
+                key={index}
+                onClick={() => setSlotTime(item.time)}
+                className={`text-center text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${
+                  item.time === slotTime
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-600 border border-gray-600'
+                }`}
+              >
+                {item.time.toLowerCase()}
+              </p>
+            ))}
+        </div>
+      </div>
+
+      {/* Book button */}
+      <div className='sm:pl-4 pt-5'>
+        <button
+          onClick={() => navigate('/login')}
+          className='text-center text-sm font-light flex-shrink-0 px-5 py-2 rounded-full hover:cursor-pointer hover:scale-110 transition-all duration-300 bg-blue-600 text-white'
+        >
+          Book appointment
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default Appointments

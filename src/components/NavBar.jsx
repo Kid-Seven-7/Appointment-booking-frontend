@@ -1,0 +1,54 @@
+import React, { useState } from 'react'
+import { assets } from '../assets/assets'
+import { Navigate, NavLink, useNavigate } from 'react-router-dom'
+
+const NavBar = () => {
+
+  const navigate = useNavigate();
+  const [showMenu, setShowMenu] = useState(false)
+  const [token, setToken] = useState(true)
+
+  return (
+    <div className='flex items-center justify-between text-sm py-4 mb-5 border-b border-d-gray-400'>
+        <NavLink to={'/'}>
+            <p onClick={()=>navigate('/')} className='text-xl font-medium'>
+                APPOINTMENT BOOKING
+            </p>
+        </NavLink>
+      <ul className='sm:flex items-start gap-10'>
+        <NavLink to={'/'}>
+            <li className='py-1'>HOME</li>
+            <hr className='border-none outline-none h-0.5 bg-red-500 w-3/5 m-auto hidden' />
+        </NavLink>
+        <NavLink to={'/branches'}>
+            <li className='py-1'>BRANCHES</li>
+            <hr className='border-none outline-none h-0.5 bg-red-500 w-3/5 m-auto hidden' />
+        </NavLink>
+            
+        <NavLink to={'/appointments'}>
+            <li className='py-1'>APPOINTMENTS</li>
+            <hr className='border-none outline-none h-0.5 bg-red-500 w-3/5 m-auto hidden' />
+        </NavLink>
+      </ul>
+      <div className='flex items-center gap-4'>
+        {
+          token 
+          ? <div className='flex items-center cursor-pointer group relative'>
+              <img className='w-8 rounded-full' src={assets.avatar_icon} alt="" />
+              <img className='w-8' src={assets.down_arrow_icon} alt="" />
+              <div className='absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
+                <div className='min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4'>
+                  <p onClick={()=>navigate('my-appointments')} className='hover:text-blue-700 cursor-pointer'>My Appointment</p>
+                  <p onClick={()=>setToken(false)} className='hover:text-blue-700 cursor-pointer'>Logout</p>
+                </div>
+              </div>
+            </div>
+          : <button onClick={()=>navigate('/login')} className='bg-red-500 text-white px-8 py-3 rounded-full font-light md:block'>Create account</button>
+        }
+        
+      </div>
+    </div>
+  )
+}
+
+export default NavBar
